@@ -1,0 +1,168 @@
+- name: Ensure SSH daemon is running.
+  service:
+    name: "{{ sshd_name }}"
+    state: started
+
+- name: sshd | Create sshd_config file backup
+  command: cp -f /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+- name: sshd | Ensure owner on /etc/ssh/sshd_config
+  file:
+    path: /etc/ssh/sshd_config
+    owner: root
+    group: root
+  tags: ["hardening:sshd"]
+
+- name: sshd | Ensure permission on /etc/ssh/sshd_config
+  command: chmod og-rwx /etc/ssh/sshd_config
+  tags: ["hardening:sshd"]
+
+- name: sshd | Ensure SSH daemon is running basic config
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "{{ item.regexp }}"
+    line: "Port {{ item.line }}"
+  with_items:
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication {{ ssh_password_authentication }}"
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin {{ ssh_permit_root_login }}"
+    - regexp: "^Port"
+      line: "Port {{ ssh_port }}"
+    - regexp: "^UseDNS"
+      line: "UseDNS {{ ssh_usedns }}"
+    - regexp: "^PermitEmptyPasswords"
+      line: "PermitEmptyPasswords {{ ssh_permit_empty_password }}"
+    - regexp: "^ChallengeResponseAuthentication"
+      line: "ChallengeResponseAuthentication {{ ssh_challenge_response_auth }}"
+    - regexp: "^GSSAPIAuthentication"
+      line: "GSSAPIAuthentication {{ ssh_gss_api_authentication }}"
+    - regexp: "^X11Forwarding"
+      line: "X11Forwarding {{ ssh_x11_forwarding }}"
+  tags: ["hardening:sshd", "hardening:sshd:basic"]
+
+- name: sshd | Ensure ssh log level is approriate
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^LogLevel"
+    line: "LogLevel {{ ssh_loglevel }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh MaxAuthTries is set to 4
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^MaxAuthTries"
+    line: "MaxAuthTries {{ ssh_max_auth_tries }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh IgnoreRhosts is enabled
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^IgnoreRhosts"
+    line: "IgnoreRhosts {{ ssh_ignores_rhost }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh HostbasedAuthentication is disable
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^HostbasedAuthentication"
+    line: "HostbasedAuthentication {{ ssh_hostbase_authentication }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh PermitUserEnvironment is disabled
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^PermitUserEnvironment"
+    line: "PermitUserEnvironment {{ ssh_permit_user_environment }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh use strong cipher
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^Ciphers"
+    line: "Ciphers {{ ssh_ciphers }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh use strong MAC algorithms
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^MACs"
+    line: "MACs {{ ssh_macs }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh use strong Key Exchange algorithms
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^KexAlgorithms"
+    line: "KexAlgorithms {{ ssh_kex_algorithms }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh idle timeout interval is configured (1)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^ClientAliveInterval"
+    line: "ClientAliveInterval {{ ssh_client_alive_interval }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh idle timeout interval is configured (2)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^ClientAliveCountMax"
+    line: "ClientAliveCountMax {{ ssh_client_alive_count_max }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh LoginGraceTime is set one minute
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^LoginGraceTime"
+    line: "LoginGraceTime {{ ssh_login_grace_time }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure ssh use pam
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^UsePAM"
+    line: "UsePAM {{ ssh_usepam }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+# 10: Number of unauthenticated connections before we start dropping
+# 30: Percentage chance of dropping once we reach 10 (increases linearly for more than 10)
+# 60: Maximum number of connections at which we start dropping everything
+- name: sshd | Ensure SSH MaxStartups is configured
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^MaxStartups"
+    line: "MaxStartups {{ ssh_max_startups }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Ensure SSH MaxSessions is limited
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^MaxSessions"
+    line: "MaxSessions {{ ssh_max_session }}"
+  tags: ["hardening:sshd", "hardening:sshd:advanced"]
+
+- name: sshd | Validating config
+  command: sshd -t
+  register: sshd_validate_result
+  tags: ["hardening:sshd"]
+  notify: restart ssh
+
+- name: sshd | Rollback config if backup failed
+  command: cp -f /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
+  when: sshd_validate_result.rc != 0

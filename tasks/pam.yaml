@@ -1,0 +1,54 @@
+# Hardening pam
+- name: pam | install libpam-pwquality (Debian)
+  pacakge:
+    name: libpam-pwquality
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: pam | Ensure password creation requirements are configured
+  lineinfile:
+    dest: /etc/security/pwquality.conf
+    state: present
+    regexp: "{{ item.regexp }}"
+    line: "Port {{ item.line }}"
+  with_items:
+    - regexp: "^minlen"
+      line: "minlen = {{ pam_minlen }}"
+    - regexp: "^minclass"
+      line: "minclass = {{ pam_minclass }}"
+    - regexp: "^dcredit"
+      line: "dcredit = {{ pam_dcredit }}"
+    - regexp: "^ucredit"
+      line: "ucredit =  {{ pam_ucredit }}"
+    - regexp: "^lcredit"
+      line: "lcredit = {{ pam_lcredit }}"
+    - regexp: "^pam_ocredit"
+      line: "pam_ocredit = {{ pam_ocredit }}"
+  tags: ["hardening:pam"]
+
+- name: pam | Update pamd rule's control /etc/pam.d/password-auth and /etc/pam.d/system-auth
+  pamd:
+    name: "{{ item }}"
+    type: password
+    control: requisite
+    module_path: pam_pwquality.so
+    module_arguments: 'try_first_pass retry=3'
+    state: updated
+  with_items:
+  - system-auth
+  - password-auth
+  when: ansible_os_family == 'RedHat'
+  tags: ["hardening:pam"]
+
+- name: pam | Update pamd rule's control /etc/pam.d/common-password
+  pamd:
+    name: "{{ item }}"
+    type: password
+    control: requisite
+    module_path: pam_pwquality.so
+    module_arguments: 'retry=3'
+    state: updated
+  with_items:
+  - common-password
+  when: ansible_os_family == 'Debian'
+  tags: ["hardening:pam"]

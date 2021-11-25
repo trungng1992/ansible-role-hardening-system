@@ -1,0 +1,36 @@
+---
+# For ssh
+ssh_port: 22
+ssh_password_authentication: "no"
+ssh_permit_root_login: "no"
+ssh_usedns: "no"
+ssh_permit_empty_password: "no"
+ssh_challenge_response_auth: "no"
+ssh_gss_api_authentication: "no"
+ssh_x11_forwarding: "no"
+ssh_loglevel: "INFO"
+ssh_max_auth_tries: 4
+ssh_ignores_rhost: "yes"
+ssh_hostbase_authentication: "no"
+ssh_permit_user_environment: "no"
+ssh_ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+ssh_macs: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmacsha2512,hmac-sha2-256"
+ssh_kex_algorithms: "curve25519-sha256,curve25519-sha256@libssh.org,diffiehellmangroup14-sha256,diffie-hellman-group16-sha512,diffie-hellmangroup18sha512,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffiehellman-group-exchange-sha256"
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 3
+ssh_login_grace_time: 60
+ssh_usepam: "yes"
+ssh_max_startups: "10:30:60"
+ssh_max_session: 10
+sshd_state: started
+ssh_restart_handler_state: restarted
+---
+# For fail2ban
+security_fail2ban_enabled: true
+security_fail2ban_custom_configuration_template: "jail.local.j2"
+---
+# For pam
+pam_minlen: 14
+pam_minclass: 4
+pam_dcredit: -1
+pam_ucredit: -1
