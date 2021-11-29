@@ -34,3 +34,8 @@ pam_minlen: 14
 pam_minclass: 4
 pam_dcredit: -1
 pam_ucredit: -1
+---
+# For password shadow
+shadow_pass_min_days: 1
+shadow_pass_max_days: 90
+shadow_pass_warn_age: 14

@@ -52,3 +52,124 @@
   - common-password
   when: ansible_os_family == 'Debian'
   tags: ["hardening:pam"]
+
+- name: pam | Update pamd rule's control /etc/pam.d/password-auth and /etc/pam.d/system-auth
+  pamd:
+    name: "{{ item }}"
+    type: password
+    control: requisite
+    module_path: pam_pwquality.so
+    module_arguments: 'try_first_pass retry=3'
+    state: updated
+  with_items:
+  - system-auth
+  - password-auth
+  when: ansible_os_family == 'RedHat'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure lockout for failed password attempts is configured (1)
+  pamd:
+    name: "common-account"
+    type: auth
+    control: required
+    module_path: pam_tally2.so
+    module_arguments: 'onerr=fail audit silent deny=5 unlock_time=900'
+    state: updated
+  when: ansible_os_family == 'Debian'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure lockout for failed password attempts is configured (2)
+  pamd:
+    name: "common-account"
+    type: account
+    control: "{{ item.control }}"
+    module_path: "{{ item.path }}"
+    module_arguments: ''
+    state: updated
+  with_items:
+  - control: requisite
+    path: pam_deny.so
+  - control: required
+    path: pam_tally2.so
+  when: ansible_os_family == 'Debian'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure lockout for failed password attempts is configured (1)
+  pamd:
+    name: {{item.name}}
+    type: auth
+    control: required
+    module_path: pam_env.so
+    new_type: auth
+    new_control: required
+    new_module_path: pam_tally2.so
+    module_arguments: 'deny=5 onerr=fail unlock_time=900'
+    state: after
+  with_items:
+  - system-auth
+  - password-auth
+  when: ansible_os_family == 'RedHat'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure lockout for failed password attempts is configured (2)
+  pamd:
+    name: {{item.name}}
+    type: account
+    control: required
+    module_path: pam_unix.so
+    new_type: account
+    new_control: required
+    new_module_path: pam_tally2.so
+    state: before
+  with_items:
+  - system-auth
+  - password-auth
+  when: ansible_os_family == 'RedHat'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure password reuse is limited
+  pamd:
+    name: "common-password"
+    type: password
+    control: required
+    module_path: pam_pwhistory.so
+    module_arguments: 'remember=5'
+  when: ansible_os_family == 'Debian'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure password reuse is limited
+  pamd:
+    name: "{{ item.name }}"
+    type: password
+    control: required
+    module_path: pam_pwhistory.so
+    module_arguments: 'remember=5'
+  with_items:
+  - system-auth
+  - password-auth
+  when: ansible_os_family == 'RedHat'
+  tags: ["hardening:pam"]
+
+- name: pam | Ensure password hashing algorithm is SHA-512
+  pamd:
+    name: "common-password"
+    type: password
+    control: '[success=1 default=ignore]'
+    module_path: pam_unix.so
+    module_arguments: 'obscure sha512'
+  when: ansible_os_family == 'Debian'
+  tags: ["hardening:pam"]
+
+
+- name: pam | Ensure password hashing algorithm is SHA-512
+  pamd:
+    name: "{{ item.name }}"
+    type: password
+    control: 'sufficient'
+    module_path: pam_unix.so
+    module_arguments: 'sha512'
+  with_items:
+  - system-auth
+  - password-auth
+  when: ansible_os_family == 'RedHat'
+  tags: ["hardening:pam"]

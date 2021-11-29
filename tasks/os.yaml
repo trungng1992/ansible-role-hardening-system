@@ -1,0 +1,15 @@
+---
+- name: os | Copy sysctl config
+  template:
+    src: "98-hardening-os.j2"
+    dest: /etc/sysctl.d/98-hardening-os.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags: ["hardening:os"]
+
+- name: os | Remove unneccessary package
+  package:
+    name: prelink
+    state: absent
+  tags: ["hardening:os"]

@@ -1,0 +1,9 @@
+---
+- name: Hardening sshd deamon
+  include: ssh.yaml
+- name: Config fail2ban
+  include: fail2ban.yaml
+- name: Config pam policy
+  include: pam.yaml
+- name: Config password shadown
+  include: shadow.yaml
